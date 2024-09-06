@@ -11,7 +11,6 @@ task("mock-event", "A sample task with params")
     await mockEvent(taskArgs.action, hre);
   });
 
-
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.26",
@@ -28,11 +27,16 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-  	localhost: {
-		url: "http://127.0.0.1:8545",
-		chainId: 3456,
-		accounts: ["0x0fdce9a033c223590e32ffb24e48d8c66bef942464f7e593925c5317fff0d71e"]
-	}
+    hardhat: {
+      chainId: 3456,
+    },
+    localhost: {
+      url: "http://127.0.0.1:8546",
+      chainId: 3456,
+      accounts: [
+        "0x0fdce9a033c223590e32ffb24e48d8c66bef942464f7e593925c5317fff0d71e",
+      ],
+    },
   },
   gasReporter: {
     enabled: true,
