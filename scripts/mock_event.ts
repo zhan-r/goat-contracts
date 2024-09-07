@@ -1,9 +1,11 @@
+import { Executors } from "../test/constant";
+
 const ethers = require("ethers");
 //import { HardhatUserConfig } from "hardhat/config";
 import { task } from "hardhat/config";
 import yargs from "yargs/yargs";
 
-const initBridge = async (hre: any): {bridge: ethers.Contract, signer: ethers.Wallet} => {
+const initBridge = async (hre: any): Promise<{ bridge : ethers.Contract, signer : ethers.Wallet }> => {
 	console.log(hre.network);
 	let key = hre.network.config.accounts[0];
 
@@ -64,6 +66,30 @@ const makePay = async (hre: any) => {
 	console.log(tx);
 }
 
+const cancel1 = async (hre: any) => {
+  const { bridge } = await initBridge(hre);
+
+  const tx = await bridge.cancel1(0);
+  console.log(tx);
+}
+
+const cancel2 = async (hre: any) => {
+  const { bridge } = await initBridge(hre);
+
+  const relayer = Executors.relayer;
+  const relayerSigner = await ethers.getSigner(relayer)
+
+  const tx = await bridge.connect(relayerSigner).cancel2(0);
+  console.log(tx);
+}
+
+const replaceByFee = async (hre: any) => {
+  const { bridge } = await initBridge(hre);
+
+  const tx = await bridge.replaceByFee(0, 1n);
+  console.log(tx);
+}
+
 export const mockEvent = async (action: string, hre: any) => {
 	switch (action) {
 		case "deposit": {
@@ -83,7 +109,24 @@ export const mockEvent = async (action: string, hre: any) => {
 			break;
 		}
 
-		default: {
+    case "cancel1": {
+      await cancel1(hre);
+      break;
+    }
+
+    case "cancel2": {
+      await cancel2(hre);
+      break;
+    }
+
+    case "replace": {
+      await replaceByFee(hre);
+      break;
+    }
+
+
+
+    default: {
 			//statements;
 			break;
 		}
