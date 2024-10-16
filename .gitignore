@@ -23,7 +23,8 @@ generated
 build
 tmp/
 
-ignition/deployments/
-ignition/regtest.json
-ignition/genesis/regtest.json
-
+# genesis
+genesis/regtest.json
+genesis/regtest.ts
+genesis/config.json
+ignition/

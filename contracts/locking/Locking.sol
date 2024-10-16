@@ -8,7 +8,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {ILocking} from "../interfaces/Locking.sol";
-import {IGoatToken} from "../interfaces/GoatToken.sol";
 import {Pubkey} from "../library/codec/pubkey.sol";
 import {BaseAccess} from "../library/utils/BaseAccess.sol";
 import {RateLimiter} from "../library/utils/RateLimiter.sol";
@@ -50,6 +49,9 @@ contract Locking is Ownable, RateLimiter, BaseAccess, ILocking {
     mapping(address validator => mapping(address token => uint256 amount))
         public locking;
 
+    // unclaimed goat balances before goat token is enabled
+    mapping(address owner => uint256 amount) public unclaimed;
+
     uint64 public constant MAX_WEIGHT = 1e6;
 
     uint256 public constant MAX_TOKEN_SIZE = 8;
@@ -59,8 +61,6 @@ contract Locking is Ownable, RateLimiter, BaseAccess, ILocking {
         address goat,
         uint256 totalReward
     ) Ownable(owner) RateLimiter(32, true) {
-        tokens[goat] = Token(true, 1, 0, 0);
-        tokens[address(0)] = Token(true, 12000, 0, 0);
         goatToken = goat;
         remainReward = totalReward;
     }
@@ -69,7 +69,7 @@ contract Locking is Ownable, RateLimiter, BaseAccess, ILocking {
      * grant sends goat token to the reward pool
      * @param amount the amount
      */
-    function grant(uint256 amount) external {
+    function grant(uint256 amount) external override onlyOwner {
         require(amount > 0, "invalid amount");
         IERC20(goatToken).safeTransferFrom(msg.sender, address(this), amount);
         remainReward += amount;
@@ -94,10 +94,10 @@ contract Locking is Ownable, RateLimiter, BaseAccess, ILocking {
      * the first index represents the X-coordinate and second is the Y-coordinate
      *
      * the validator address =
-     * sha256(ripemd160(compressed pubkey))
+     * ripemd160(sha256(compressed pubkey))
      *
      * the data to sign =
-     * abi.encodePacked(block.chainid, validator address, validator owner(msg.sender))
+     * keccak256(abi.encodePacked(block.chainid, validator address, validator owner(msg.sender)))
      * it includes the validator address to prevent usage error
      *
      * the msg.sender will be the owner of the validator, and an owner can have multiple validators
@@ -214,7 +214,7 @@ contract Locking is Ownable, RateLimiter, BaseAccess, ILocking {
         address token,
         uint256 amount
     ) external override OnlyLockingExecutor {
-        if (token != address(0)) {
+        if (token != address(0) && amount > 0) {
             IERC20(token).safeTransfer(recipient, amount);
         }
         // sends back the native token in the runtime
@@ -245,7 +245,6 @@ contract Locking is Ownable, RateLimiter, BaseAccess, ILocking {
         address recipient
     ) external override OnlyValidatorOwner(validator) RateLimiting {
         require(recipient != address(0), "invalid recipient");
-        require(claimable, "claim is not open");
         emit Claim(reqId++, validator, recipient);
     }
 
@@ -266,14 +265,27 @@ contract Locking is Ownable, RateLimiter, BaseAccess, ILocking {
             goat = remainReward;
         }
 
+        // performing the native token adding in the runtime
         if (goat != 0) {
-            IERC20(goatToken).safeTransfer(recipient, goat);
+            if (claimable) {
+                IERC20(goatToken).safeTransfer(recipient, goat);
+            } else {
+                unclaimed[recipient] += goat;
+            }
             remainReward -= goat;
         }
+        emit DistributeReward(id, goat, gasReward);
+    }
 
-        emit DistributeReward(id, goatToken, goat);
-        // performing the native token adding in the runtime
-        emit DistributeReward(id, address(0), gasReward);
+    /**
+     * reclaim withdraws accumulated goat tokens when claim is available
+     */
+    function reclaim() external {
+        require(claimable, "claim is not open");
+        uint256 amount = unclaimed[msg.sender];
+        require(amount > 0, "no unclaimed");
+        unclaimed[msg.sender] = 0;
+        IERC20(goatToken).safeTransfer(msg.sender, amount);
     }
 
     /**

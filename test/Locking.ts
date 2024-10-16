@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { Executors, hash160, trimPubKeyPrefix } from "./constant";
+import { Executors } from "../common/constants";
+import { hash160, trimPubKeyPrefix } from "../common/utils";
 import {
   loadFixture,
   impersonateAccount,
@@ -17,6 +18,8 @@ describe("Locking", async () => {
 
     const locking: Locking = await factory.deploy(owner, goat, 1000n);
     await goat.transfer(locking, 1000n);
+
+    await locking.addToken(ethers.ZeroAddress, 12000, 0, 0);
 
     await impersonateAccount(Executors.locking);
     await payer.sendTransaction({
@@ -280,6 +283,11 @@ describe("Locking", async () => {
     await expect(await locking.owners(validator)).eq(others[0]);
 
     await goat.approve(locking, ethers.MaxUint256);
+    await expect(locking.connect(others[0]).grant(1n)).revertedWithCustomError(
+      locking,
+      "OwnableUnauthorizedAccount",
+    );
+    await expect(locking.grant(0n)).revertedWith("invalid amount");
     await expect(await locking.grant(100n))
       .emit(locking, "Grant")
       .withArgs(100n)
@@ -516,44 +524,51 @@ describe("Locking", async () => {
       "invalid recipient",
     );
 
-    await expect(locking.connect(others[0]).openClaim()).revertedWithCustomError(locking, "OwnableUnauthorizedAccount");
-    await expect(locking.claim(validator, owner)).revertedWith("claim is not open")
-    expect(await locking.openClaim()).emit(locking, "OpenCliam")
-    await expect(locking.openClaim()).revertedWith("claim is open")
-    expect(await locking.claimable()).to.be.true;
+    await expect(
+      locking.connect(others[0]).openClaim(),
+    ).revertedWithCustomError(locking, "OwnableUnauthorizedAccount");
+    expect(await locking.claimable()).to.be.false;
 
     await expect(await locking.claim(validator, owner))
       .emit(locking, "Claim")
       .withArgs(0, validator, owner);
 
     await expect(
-      locking.distributeReward(2, owner, 1, 1),
+      locking.distributeReward(0, owner, 1, 1),
     ).revertedWithCustomError(locking, "AccessDenied");
 
     expect(await locking.remainReward()).eq(1000);
     await expect(
-      await locking.connect(executor).distributeReward(0, owner, 1000, 0),
+      await locking.connect(executor).distributeReward(0, owner, 100, 1000),
     )
       .emit(locking, "DistributeReward")
-      .withArgs(0, goat, 1000)
-      .emit(locking, "DistributeReward")
-      .withArgs(0, ethers.ZeroAddress, 0)
-      .emit(goat, "Transfer")
-      .withArgs(locking, owner, 1000);
+      .withArgs(0, 100, 1000);
 
-    await expect(await goat.balanceOf(locking)).eq(0);
-    expect(await locking.remainReward()).eq(0);
+    await expect(await locking.unclaimed(owner)).eq(100);
+    await expect(await goat.balanceOf(locking)).eq(1000);
+    expect(await locking.remainReward()).eq(900);
+
+    await expect(locking.reclaim()).revertedWith("claim is not open");
+
+    expect(await locking.openClaim()).emit(locking, "OpenCliam");
+    await expect(locking.openClaim()).revertedWith("claim is open");
+    expect(await locking.claimable()).to.be.true;
+
+    await expect(await locking.reclaim())
+      .emit(goat, "Transfer")
+      .withArgs(locking, owner, 100);
+    await expect(locking.reclaim()).revertedWith("no unclaimed");
 
     await expect(await locking.claim(validator, owner))
       .emit(locking, "Claim")
       .withArgs(1, validator, owner);
 
     await expect(
-      await locking.connect(executor).distributeReward(1, owner, 0, 1000),
+      await locking.connect(executor).distributeReward(1, owner, 1000, 100),
     )
       .emit(locking, "DistributeReward")
-      .withArgs(1, ethers.ZeroAddress, 1000)
-      .emit(locking, "DistributeReward")
-      .withArgs(1, goat, 0);
+      .withArgs(1, 900, 100)
+      .emit(goat, "Transfer")
+      .withArgs(locking, owner, 900);
   });
 });
