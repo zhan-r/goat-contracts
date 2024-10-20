@@ -79,7 +79,7 @@ dataSources:
           handler: handleCompleteUnlock
         - event: Claim(uint64,address,address)
           handler: handleClaim
-        - event: DistributeReward(uint64,address,uint256)
+        - event: DistributeReward(uint64,uint256,uint256)
           handler: handleDistributeReward
         - event: ChangeValidatorOwner(address,address)
           handler: handleChangeValidatorOwner

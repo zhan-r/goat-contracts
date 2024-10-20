@@ -392,22 +392,22 @@ export function handleDistributeReward(event: DistributeReward): void {
   if (claim) {
     log.info('ClaimEntity found. Updating distribution status and amount', [event.params.id.toString()])
     claim.distributed = true
-    claim.distributedAmount = event.params.amount
+    claim.distributedAmount = event.params.goat
     claim.save()
-    log.info('ClaimEntity updated. Distributed: true, Amount: {}', [event.params.amount.toString()])
+    log.info('ClaimEntity updated. Distributed: true, Amount: {}', [event.params.goat.toString()])
   } else {
     log.warning('ClaimEntity not found for ID: {}', [event.params.id.toString()])
   }
 
   let stats = LockingStatsEntity.load("1")
   if (stats) {
-    log.info('Updating LockingStatsEntity remainReward', [event.params.amount.toString()])
+    log.info('Updating LockingStatsEntity remainReward', [event.params.goat.toString()])
     log.info('Previous remainReward: {}', [stats.remainReward.toString()])
-    stats.remainReward = stats.remainReward.minus(event.params.amount)
+    stats.remainReward = stats.remainReward.minus(event.params.goat)
     stats.save()
     log.info('LockingStatsEntity updated. New remainReward: {}', [stats.remainReward.toString()])
   } else {
-    log.warning('LockingStatsEntity not found', [event.params.amount.toString()])
+    log.warning('LockingStatsEntity not found', [event.params.goat.toString()])
   }
 }
 
