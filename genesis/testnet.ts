@@ -28,12 +28,37 @@ const param: Param = {
         withdrawalTaxBP: 2,
         maxWithdrawalTax: "2000000000000000",
         minWithdrawalInWei: "100000000000000",
-        deposits: [],
+        deposits: [
+            {
+                txid: "b380ce2c8da1d8c0d395a7ec26f15b1a893496c61e3a91d04cd0591f407a112e",
+                txout: 0,
+                address: "0xb0898635d250e1eb51Efa908001bdbA4f62df736",
+                satoshi: 1000000000,
+            },
+            {
+                txid: "525b9c691e12166e1782fc0c1168e6062b8502b13f512d297c9368082f9ed63a",
+                txout: 0,
+                address: "0x4beA43b6C60bB87751333beE6Ce60aF347D461e9",
+                satoshi: 1000000000,
+            },
+            {
+                txid: "95f92ae85504c61f453e649a4ddb3dbb658c4940bfca9d1d0e25f0a588d6fa4a",
+                txout: 0,
+                address: "0xEcB6Be2Ee6C2BAD774dD793f4f97eAbA4BD0168b",
+                satoshi: 1000000000,
+            },
+            {
+                txid: "9756f6e763a0eb2527ca24e8e5d8679ce49d290e93b3d590c243ee450352e733",
+                txout: 0,
+                address: "0xcF0932ea0dd7163083C7B1ac467580a2BE519177",
+                satoshi: 1000000000,
+            },
+        ],
     },
     Bitcoin: {
-        height: 3127833,
+        height: 3191651,
         network: "testnet3",
-        hash: "000000000000007f07b843bb8ec36dd310ec6edb72a95389bc99ed2470a4e2b5",
+        hash: "000000000ebcb157e154584adb14244f4b9d6f7ab6ad6236caa7690b4f485e0a",
     },
     WrappedBitcoin: {},
     Relayer: {
@@ -60,6 +85,7 @@ const param: Param = {
         ],
     },
     Locking: {
+        strict: true,
         owner: "0xEFe7594939a64fF3Bd660d97B78186fBeF4450cF",
         tokens: [
             {
@@ -108,13 +134,18 @@ const param: Param = {
     },
     Consensus: {
         Relayer: {
-            tssPubkey: "028cd0837d94143eb194fd625ec0edab6debfca18f7f059f97187d17955fefd1b0",
+            tssPubkey:
+                "028cd0837d94143eb194fd625ec0edab6debfca18f7f059f97187d17955fefd1b0",
             acceptProposerTimeout: "1m",
         },
         Bridge: {
-            minDepositInSat: 1e4
-        }
+            minDepositInSat: 1e4,
+        },
+        Locking: {
+            exitDuration: "3600s",
+            unlockDuration: "1800s"
+        },
     },
 };
 
-writeFileSync("./genesis/config.json", JSON.stringify(param, null, "  "));
+writeFileSync("./genesis/testnet-config.json", JSON.stringify(param, null, "  "));
