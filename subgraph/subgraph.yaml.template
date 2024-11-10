@@ -67,7 +67,7 @@ dataSources:
           handler: handleUpdateTokenLimit
         - event: Grant(uint256)
           handler: handleGrant
-        - event: OpenCliam()
+        - event: OpenClaim()
           handler: handleOpenCliam
         - event: Create(address,address,bytes32[2])
           handler: handleCreate
