@@ -1,6 +1,6 @@
+import fs from "fs/promises";
 import { createHash } from "node:crypto";
 import { inspect } from "node:util";
-import fs from "fs/promises";
 
 export const trimPubKeyPrefix = (key: string) => {
   if (key.startsWith("0x")) {
@@ -18,7 +18,7 @@ export const hash160 = (data: Buffer) => {
 };
 
 export const sha256 = (data: Buffer) => {
-  return createHash("sha256").update(data).digest("hex")
+  return createHash("sha256").update(data).digest("hex");
 };
 
 export function trim0xPrefix(address: string) {
@@ -41,5 +41,5 @@ export function print(data: any) {
 
 export async function readJson<T>(path: string): Promise<T> {
   const paramFile = await fs.readFile(path, "utf-8");
-  return JSON.parse(paramFile.toString())
+  return JSON.parse(paramFile.toString());
 }

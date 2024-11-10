@@ -1,10 +1,10 @@
-import { ethers } from "hardhat";
-import { expect } from "chai";
-import { Executors } from "../common/constants";
 import {
-  loadFixture,
   impersonateAccount,
+  loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { expect } from "chai";
+import { ethers } from "hardhat";
+import { Executors } from "../common/constants";
 import { Bitcoin } from "../typechain-types";
 
 describe("Bitcoin", async () => {
@@ -64,9 +64,9 @@ describe("Bitcoin", async () => {
       "AccessDenied",
     );
 
-    expect(await bitcoin.connect(relayer).newBlockHash(blockHash101))
+    await expect(await bitcoin.connect(relayer).newBlockHash(blockHash101))
       .emit(bitcoin, "NewBlockHash")
-      .withArgs(blockHash101);
+      .withArgs(101n);
 
     expect(await bitcoin.startHeight()).eq(100);
     expect(await bitcoin.latestHeight()).eq(101);
